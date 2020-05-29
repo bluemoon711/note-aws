@@ -1,0 +1,331 @@
+Exam: $150, 80min
+
+--IAM: Identify & Access Management
+STS: Security Token Service
+Different calls: AssumeRole, AssumeRoleWithWebIdentify, AssumeRoleWithSAML, GetFederationToken, GetSessionToken
+STS API call: session token, an access key ID, a secret access key, expiration timestamp
+AWS Organizations
+API Acess Keys are required: AWS Command Line Interface(CLI), Tools for Window PowerShell, AWS SDKs, Direct HTTP calls using the APIs for
+individual AWS services.
+Important Facts: Roles do not have API credentials. Never create or store API keys on an EC2 instance.
+
+Q1: API Access Keys are required in which scenarios below?
+A: AWS CLI, Windonw PowerShell (API keys are needed when working programmatically through the CLI, PowerShell, Direct HTTP calls, and SDK API access)
+Q2: What best describes an IAM role?
+A: A role is something that a user, application or service can "assume" to receive temporarty security credentials that provide access to a resource.
+Q3. Wchich of the following are managed using IAM?
+A: Multi-Factor authentication, Roles. (IAM is used to manage users and their access to AWS, and AWS service, as well as access from one AWS resource to
+another including: Users, Groups, Roles, Access Policies, API keys, Password Policies, Multi-factor authentication.)
+
+---EC2: Elastic Compute Cloud
+EC2 instances components: Amazon Machine Image(AMI), Instance Type, Network interface, Storage
+process features: AVX, AES-NI(hardware acceleration of encryption), Turbo Boost(allow the processor to temporarily run at a higher clock speed), Transactional 
+Synchrominzation Extenstions, P state and C state control
+EBS: Elastic Block Store(hard drive)   lazy loading....
+EBS Types: SSD (general purpose pg2, provisioned IOPS SSD io1), Hard disk Drives(throughput optimized st1, cold HDD sc1)
+GP2: up to 10,000 IOPS per volume, only 160 MB/s.
+ST1: up to 500MB/s and 500 IOPS per volume. 
+IOPS: Input/Output Operations per Second
+snapshot: point-in-time backups the EBS volumes that are stored in S3
+view user-data&instance meta-data:
+curl http://169.254.169.254/latest/user-data/ (display bootstrapping commands)
+curl http://169.254.169.254/latest/meta-data/ (displays AMI, instance type, etc)
+
+//scripts during setting up instances
+write a Bash Scirpt that installs Apache
+#!/bin/bash
+sudo yum update -y
+sudo yum install -y httpd
+sudo service httpd start
+sudo chkconfig httpd on
+//scripts via SSH connecting to install Apache and Php
+sudo yum update -y
+sudo yum install -y httpd24 php70
+sudo service httpd start
+sudo chkconfig httpd on
+sudo usermod -a -G apache ec2-user
+sudo chown -R ec2-user:apache /var/WWW
+echo "<?php phpinfo(); ?>" > /var/WWW/html/phpinfo.php
+
+EC2 placement groups: cluster placement group, spread placement group
+Puchasing options: on-demand, reserved(1-3 years), spot
+EFS: Elastic File System, a shared filesystem option for EC2.
+KMS: Key Management Service
+Q1:If you are desiging an application that requires fast(10-25Gbps), low-latency connections between EC2 instances, what EC2 feature should you use?
+A: placement groups
+Q2:If you are running an application in a production environment and must add a new EBS volume with data from a snapshot, what should you do to 
+avoid degraded perfomance during the volume's first use?
+A: Initialize the data by reading each storage block on the volume
+Q3:What command should you run on an instance if you want to view its bootstrp script?
+A: curl http://169.254.169.254/latest/user-data
+Q4:What best describes the characteristics of EBS volumes?
+A: They are persistent and can live past the lifetime of the instance. EBS volumes are network-attached, persistent storage volumes. When delete on 
+termination is disabled they live past the life of an EC2 instance.
+Q5. Developers want your help in deploying a high Transactional Cassandra NoSQL database on AWS. Due to the frequent writes, you want to maximize IOPS.
+Which EC2 isntance type would your recommend?
+A: Storage Optimized (i3). Maximum IOPS are achieved by using loval SSD instance store. i3 instances provide up to 3.3M IOPS to the local ephemeral storage.
+Because Cassandra replicates datta across multiple nodes, ephemeral storage is safe to use.
+Q6. You can mount to EFA from whicho fo the following:
+A: On-prem servers running Linux, EC2 instances running Linux. (EFS is comptible with Linux operating systems.)
+
+---VPC: Virtual Private Could--housed within a chosen AWS region, spans multiple avilability zones 
+IPV4(32 bits, public and private addresses), IPV6(128 bits, public only)
+IGW: Internet Gateways
+Route Tables: two main components (destination, target)
+NACLs: Network Access Control Lists (inbound, outbound)
+Network ACL:
+1) Operates at the subnet boundary
+2) Supports ALLOW & DENY rules
+3) Stateless, so return traffic must be allowed through an outbound rule
+4) Process rules in NUMBER ORDER (lower #'s overrule higher #'s)
+Security Groups: smilar to NACLs at instance level
+Q1: A new CRM application is ready for its first relase into production. You want to make sure that the Production Enviorment will not be reachable
+from the Development Enviorment. What is the easist way to isolate these two enviorments?
+A: Put them in separate VPCs.
+Q2: What are two things that must be configured to allow public access to an EC2 instance in a VPC?
+A: Public IP or Elastiv IP or IPv6 address, route in the subnet route table with 0.0.0.0/0 as the destination and the Internet Gateway as the target
+Q3: The customer has requested that all instances deployed in a subnet of the VPC be accessible from the Internet. What must be configured to ensure
+that this requirement is met?
+A: Route table. A router table with a route to the internet must be associated with the subnet before instances will be accessible from the internet.
+Q4: You are running a public web service on an EC2 instance with a Public Ip. The application seems to be running slow, so you recommend to the administrator
+taht he restart it. He decides it would be best to stop and start the instance. When the instance restarts, users are unable to reach it. What could be
+the problem?
+A: The public IP has changed. WHen an instance is stopped the public ip is reclaimed by AWS. A new one is assigned when the instance starts. An Elastic
+IP should be used instead.
+
+---High avilability
+ELB: Elastic Load Balancer, paired with Auto Scaling, could be used in public and private EC2
+classic ELB(simple balancing of traffic to multiple EC2), application ELB(using Content-based rules), network LB(extreme perfomance, layer 4 TCP loading
+balancing)
+Bastion Host: EC2 instance that lives in a public subnet and used as a "gateway" for traffic that is destined for instances that lives in private subnets.
+NAT Gateway: created in a public subnet, part of the private subnets route table
+VPC endpoints: gateway endpoints (S3 and DynamoDB), interface endpoints
+Auto Scaling: automates the process of increasing or decreasing the number of provisioned on-demand instances available for your application
+Auto Scaling components: launch configuration, auto scaling group, cloudwatch alarms
+Q1: You are having trouble deploying an application in an Autoscaling Group because it is stateful. What two things must you do to make it stateless?
+A: Have developers rewrite the application to use a NoSQL database for state information;
+   Provision a NoSQL database such as DynamoDB or ElastiCache.
+Q2: Your team is trying to migrate a busy application to the cloud. They have established a VPN to an AWS VPC. While they are provisioning the EC2s in 
+the VPC they want to see if it is possilbe to continue to route traffic to the on-premise servers using a load Balancer inside of the VPC. What would you
+suggest?
+A: Configure a target group with IP addresses as the target type. Add the private IP addresses of the on-premise servers to the target group. Configure
+an ALB or NLB to route to the target group.
+Q3: Your document management application makes heavy use of S3. You use autoscaling to make sure that there is always enough EC2 instances. The instances are
+depolyed in private subnets. What VPC feature should you utilize to make sure that read/write performances to S3 does ot suffer under peak load?
+A: VPC Endpoints for S3.
+Q4: Which of the following AWS servies are inherently Fault Tolerant?
+A: Route 53, DynamoDB. (RDS can be made to be hightly available, but not fault tolerant due to the time it taks to fail over)
+Q5. What happens when an EC2 instance that is being served traffic from a ELB becomes unhealthy?
+A: The ELB will stop serving traffic to it and send new requets to the remaining healthy instances. Auto Scaling can take unhealthy instance, terminate
+it and replace it with a new instance.
+Q6. You deploy a highly available architecture across two AZs. At peak load, there are four instances running at about 65% average capacity. What changes
+would you need to make this architecture fault tolerant?
+A: Add two more intances in a third AZ for a total of six.
+
+---DNS services
+Route 53: a domain management service provided by AWS (domain registration, domain name system service, health checking)
+Q1: Your CloudFront distribution is performing well, but you are still getting too many requests at the origin locations. What could be one way to increase
+CloudFront performances?
+A: Increase the default TTL. If your default time to live (TTL) is too short, you may have requests form the edge location to the origin occuring when they
+are not required. If you increase the TTL, you should experience fewer hits to the origin.
+Q2: Which of the following will help to offload requests to your S3 bucket?
+A: Regional Edge Caches, CloudFront Distribution configured to cache static content
+Q3. An RTMP distribution is for ...
+A: streming Adobe Flash media files from an S3 bucket origin.
+Q4. What are two primary benefits of using a CloudFront web distribution?
+A: Users experience lower latency and faster content load time. Reduce load on your application's resources (Since static content is cached, there are fewer
+requests made to the origin servers).
+
+---Database
+Rational databases (SQL) (vertical scaling and read replicas, OLTP/OLAP), NoSQL Databases (horizontal scaling, four types: column, key-value, document, graph)
+Amazon RDS, Amazon Redshift
+Amazon DynamoDB(document), Amazon ElastiCache(Key-value), Amazon Neptune(graph), HBase on EMR(column)
+RDS: Relational Datebase Service
+RDS backups: Maximum retention period for automated sanpshot 35 days
+Edge location: AWS Route 53, AWS cloudFront, AWS WAF, AWS shield, Lambda Edge
+
+ElastiCache: Memcached (simple, easy to scale, multithreaded), Redis (complex, multi-AZ failover, snapshots for backup and restore), data persistence, encryption)
+Redshift: a petabyte-scale data warehousing service (OLAP), massive parallel processing (MPP)
+Redshit Spectrum: query unstructured data stored in S3, query exabytes of data in a few mins!
+Q1: When or why could you use Redshift Spectrum?
+A: To query structured, semi-structured, or unstructured data stored in S3 using SQL and joining that with your Redshift tables.
+Q2: Which database service allows you to access your data with a choice of open source APIs?
+A: Neptune
+Q3: Which two solutions are suitable for storing session state information for your information?
+A: Redis on ElastiCache, DynamoDB. (session state information is frequently updated, and can place a heavy load on your relational database).
+Q4. Which database service allows you to provision the number of reads per second that your talbe can support?
+A: DynamoDB (With DynamoDB you can provision Read Capacity Units (RCU) and Write Capacity Units (WCU) or just let it autoscale.)
+Q5. What database service on AWS is optimized for querying the relationships between entities?
+A: Neptune (a Graph Database service, optimized for graph structures such as nodes(data entities), edges(relationships), and properties to represent and store data)
+
+---S3: Simple Storage Service
+SSE(Server Side encryption), Client Side encryption, 
+(SSE-S3, SSE-C, SSE-KMS)
+Storage Class: Standard, Reduced Redundancy Storage(RRS), Infrequent Access(S3-IA) (> 30 day), One Zone Infrequent Access(S3 One Zone-IA)(> 30 day), Glacier (>90 day, vault
+lock feature)
+S3 Event Notification (SNS, Lamba, SQS)
+S3 permissions (IAM, bucket policies, S3 access control list)
+CORS(Cross-Origin Resource Sharing)
+--Some tool to check up S3 static website: dig ...(website), nslookup ...(website)
+Storage "Transit" Services: snowball, multi-part upload (100MB, up to 5TB), single operation upload (up to 5GB), storage gateway 
+snowball (upt to 80TB), snowball edge(up to 100TB), snowmobile(100PB)
+Storage Gateway(store local data in S3): Volume Gateway (Gateway-Cached Volumes, Gateway-Stored Volumes--EBS snapshots), File Gateway(objects are stored in S3), 
+Tape Gateway(common backup applications)
+
+Q1. You work for a hospital that is required to store patient's medical reports for minimum of 10 years. Most of these records will never be accessed but must be made aviailable
+upon request (within a few hours). What is the most cost-effective storage option?
+A: Glacier
+Q2. What AWS solution will automatically back up your local data to S3 and can recover it when a disk volume fails?
+A: Storage Gateway.
+Q3. Which implemetation of Storage Gateway allows you to access your files as objects in S3 and preserves their metadata?
+A: File Gateway. (It is the only implemetation that allows you direcgt access to your objects in S3)
+Q4. How long will it take to retrieve an archive from Glacier using standard retrieval if the vault is locked?
+A: Three to five hours to restore it and then the time to download. (Time to first byte is 3 to 5 hours. You can be notified by SNS when you can start the download.)
+
+----VPN(virtal private network)
+Internet Protcol Security (IPsec): suite of secure network protocols for IPv4, provides mutal authentication and encryption
+only have one virtal private gateway can be attached to a VPC
+customer gateway: a pysical device or software application. staic, dynamic routing: border gateway protocol(BGP), autonomous system number(ASN)
+
+AWS Direct Connect: a service providing a dedicated network connection between your network and one of the AWS direct connect locations.
+benefits: reduce network costs, increase network consistency, dedicated private network connection to on-premise.
+
+Q1: You have set up an AWS Direct Connect connection for your company but still want to create a backup solution in case the Direct Connect connections
+fail. What two solutions could use as failover connection?
+A: Direct Connect (You can configure a second Direct Connect that could connect to a different Direct Connect Facility. They could give you double the 
+bandwidth when both are operating.), AWS virtual private network (A virtal private network is a great backup solution for AWS direct connect. You setup 
+the VPN as a lower priority route than the Direct Connect and it will automatically failover.)
+Q2. You configured a Hardware VPN using a Customer Gateway and a Virtual Private Gateway. YOu are concerned about there being a single point of failure.
+What could you do to fix this?
+A: Install a second Customer Gateway in the datacenter and create a second VPN connections to the Virtual Private Gateway. (The Virtual Private Gateway 
+already has two IPSec tunnels, so is not a single point of failure. However, the Customer Gateway is.)
+Q3. You are a global organization and have deployed VPCs in four regions around the world. Servers in your datacenter in the U.S. need connect to instances 
+in these VPCs. How could you most esailiy make a private connection from your datacenter that could reach each VPC?
+A: Create a Direct Connect to a region close to your datacenter and make a private VIF connection to Direct Connect Gateway.
+
+------Application and Messaging services
+SNS: Simple Notification Service
+SNS components(topic <=256KB, subscriber, publisher)
+SES: Simple Email Service
+SQS: Simple Queue Service (server side encryption)
+two types of polling(long, short)   two types of queues(standard, firsr-in-first-out FIFO)
+an queue sotres messages (for up to 14 days)
+loosely coupled/decoupled systems: multiple componets that can process information without being connected
+Amazon MQ (broker, web console): allow you to use industry APIs and protocols for messaging, including JMS, NMS, AMQP, STOMP, MQTT, and WebSocket.
+SWF: Simple Work Flow Service (starter, workflow, tasks, worker)
+API Gateway 
+build RESTful APIs, delpoly APIs to a "Stage", create a new API version by cloning an exisiting one,
+roll back to previous API deployments, custom domain names, create and mange API keys for access and
+meter usage of the API keys through Amazon CloudWatch Logs....
+benefits: ability to cache API responses, DDoS protection via CloudFront, SDK generation for iOS, Android,
+support swagger, request/response data transformation
+Q1. Besides CloudFront, what are two ways API Gateway can blok DDOS attacks from reaching your backend?
+A: Caching API reponses, request throttling
+Q2. Which service will assure that tasks get performed in a pre-defined sequence? 
+A: SWF
+Q3. Which messaging services can send a message to multiple subscribers simultaneously?
+A: Amazon MQ, SNS. (SQS is for sending a message to a single recipient.)
+
+------Serverless architectures
+microservices: lamda functions, messaging services, API gateway, containers, load balancing and autoscaling.
+Lambda: serverless computing platform. 15min limitation!! 
+Q1. Which of the following is not a possilbe trigger for a lamba function?
+A: Resource Groups. With the Resource Groups tool, you can create a custom console that organizes and consolidates
+information based on your project and the resources that you need.
+Q2. How can you give your Lamba function more CPU capacity so it completes faster?
+A: You can dial up the amount of RAM, which also proportionally increases CPU.
+
+
+-----Monitoring CloudWatch
+metrics, logs and events
+set alarms
+CloudTrail: show the API request and the status of Failed for each failed request
+CloudWatch: a monitoring and management service that provides data and actionable insights
+for AWS, hybrid, and on-premises applications and infrastructure resources.
+
+Q1. How could you automatically add tags to instances when they are first launched?
+A: Create a Lambda function triggered by a CloudWatch Event.
+Q2. Why does stopping and starting an instance (usually) fix a System Status Check error?
+A: Stopping and starting an instance causes the instance to be provisioned on differnt AWS
+hardware.
+Q3. Which of the following CloudWatch EC2 metrics will require a custom script to enable?
+A: Memory Utilization. (Custom scripts are needed to enable OS-levle monitoring of EC2 instances.
+Memory Utilization falls into that category, which CPU Credit Usage and Utilizaton does not.)
+Q4. What is the difference between an System Status Check and an Instance Status Check?
+A: System Status Check failures represent an AWS issue at the host level, while instance Status
+Check failures are generally issues with our specific instance at the OS level. (System Status
+failures are things like hardware failure of the hose. Instance Status failures are things like
+software misconfigureation on memory exhaustion.)
+Q5. Where can you find a log of failed API authorizatins?
+A: CloudTrail Logs. CloudTrail will show the API request and the status of Failed for each failed request.
+
+-----Deployment Services
+Cloud template
+CloudFormation: saves time, allows for backups of infrastrucute, verision control infrastructure
+template: resources, parameters, mappings, conditions, outputs
+helper scripts: cfn-init(packages, users, groups, files, commands), cfn-signal, cfn-hup
+ECS: Elastic Container Service, a container management service, components(Docker Image, Container Registry,
+Task Definitions, ECS cluster)
+EKS(Elastic Container Service for Kubernetes)
+Elatic BeanStalk: automated deployment and scaling service, deployment Options(In-place, Blue-Green)
+
+
+-----Analytics
+Kinesis: Video Streams, Data Streams, Firehose, Data Analytics
+benefits: real-time processing, parallel processing, durable, scales
+Elastic MapReduce (EMR): running big data frameworks (Hadoop, Spark) on AWS
+EMR slave nodes: core node, task node
+EMR map phase, reduce phase: 
+------
+KMS: Key Management Service
+RTO: recovery time objective -how long to recover
+RPO: recovery point objective -how much data is lost
+4 disater recovery strategy: backup and restore, pilot light, low capacity standby, multi-site active-active
+
+Q1. Which of the following services or service features are natively highly avaialbel in a region and can cope 
+with a AZ failure without itself failing.
+A: EBS snapshots (EBS snapshots, or AMIs, are stored within S3 and so will be safe if an AZ fails.), VPC (running
+across a region), Internet Gateway, Virtual Private Gateway, Dynamic Hardware VPC VPN (a correctly configured 
+Dynamic VPN uses two tunnels in serrated AZ, and so it's resilient to the failure of an AZ.)
+Q2. Which of the following EC2 metrics will NOT be automatically collected by CloudWatch?
+A: The number of running processes on the instance (only available from within the OS), Average Memory Utilization.
+Q3. Which of the following services allows an administrator access to the underlying operating system?
+A: Amazon EC2 (SSH?RDP to the opertating system of your EC2 instances), Amazon EMR (EMR allows you to SSH into the Master
+Node). (DynamoDB and Amazon RDS provide APIs for operations.)
+Q4. As an AWS consultant, you have been tasked with finding ways to quickly lower a client's AWS monthly bill. What
+is the first thing you should ask them for?
+A: Ask them to run a Trusted Advisor report and send you the results.
+Q5. You are running an application on an EC2 instance that is extremely sensitive to variations in network performance, 
+specifically the variation in PING times and latency. The application also devours CPU cycles when this network jitter
+happens, so you need to implement a solution that removes any risk of network performance degradation. What option 
+works in this scenario?
+A: Ensure that the instance has enhanced networking. (Enhanced networking (https://aws.amazon.com/premiumsupport/knowledge-center/enable-configure-enhanced-networking/) 
+allows high-performance networking by bypassing the need for CPU involvement in virtualizing a network interface. 
+This increases packets per second and decreases the variability in network performance.)
+Q6. An application that retrieves data from an external web site is running on a single M5 large instance with a private IP.
+During peek loads, users report very long delays and timeouts. CloudWatch reports the CPU usage never climbs above 60%. 
+What could be causing the issue?
+A: The instance could be sending outbound requests through a NAT instance which may be undersized. (If the NAT is running on 
+an EC2 with low network performance, it could be a bottleneck.)
+Q7. You have an application which demands extreme database performance. It needs to handle millions of read operations per 
+second, and offer low latency. What product or combination of products would you suggest?
+A:  DynamoDB and DAX (DynamoDB accelerator (DAX) adds performance enhancements to DynamoDB, and is the best solution available
+ to meet this scenario's demands.)
+Q8. What can help boost performance of an HPC application that relies heavily on inter-node communication?
+A:  Making sure all instances are using Enhanced Networking. (Enhanced networking uses single root I/O virtualization (SR-IOV)
+to provide high-performance networking capabilities on supported instance types. SR-IOV is a method of device virtualization 
+that provides higher I/O performance and lower CPU utilization when compared to traditional virtualized network interfaces) 
+Putting all instances in a Cluster Placement Group.
+Q9. Your development team is building an application. It will be used for student registrations at a nearby university. 
+It will receive heavy use a few times a year before term-time, and light usage for the remainder of the year. The student 
+data being stored includes standard ID information such as name, address, DOB, government ID number, class enrollment, etc.
+The data is private and no public access should be allowed.Given the usage profile, and from a cost optimization perspective, 
+what database solution would you suggest to the development team for using with the application?
+A:  One or more tables within DynamoDB (DynamoDB offers a usage model and it can be configured to scale based on demand,
+ either automatically or manually. While it is a public facing database, it can be restricted, as with all AWS products.)
+Q10. Your company is currently storing large amounts of data using Storage Gateway in a gateway-stored configuration. The company 
+would like to decommission this and store and access all the data directly in S3. What would be the most efficient way 
+to migrate the existing data into S3?
+A: Restore the EBS snapshots managed by Storage Gateway onto EBS volumes. Attach the volumes to EC2s in a VPC that has an S3 endpoint.
+Log into the EC2s and copy the data into S3 using the CLI. (In gateway-stored mode, the data is already stored in S3 as EBS snapshots, 
+so you can get access to it by creating EBS volumes from the snapshots.)
